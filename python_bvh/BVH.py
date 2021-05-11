@@ -46,6 +46,7 @@ def readBVH(bvhAbsPath):
             if "CHANNELS" in line:
                 tmpNode.chLabel.extend(line.split(None, 7)[2:])
                 frameIndex += len(tmpNode.chLabel)
+                # print(frameIndex)
                 continue
             if "End Site" in line:
                 tmpNode.fHaveSite = True

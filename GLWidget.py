@@ -7,6 +7,8 @@
 import numpy as np
 import time
 import cv2
+import math
+import scipy.linalg as linalg
 
 from PyQt5.Qt import *
 from OpenGL.GL import *
@@ -51,6 +53,13 @@ class GLWidget(QOpenGLWidget):
         self.stroke_posX = []
         self.stroke_posY = []
         self.last_stroke_pos = []
+
+        self.rotate_axisX = [1,0,0]
+        self.rotate_axisY = [0,1,0]
+        self.rotate_axisZ = [0,0,1]
+        self.rot_posx = [0,0,0]
+        self.rot_posy = [0,0,0]
+        self.rot_posz = [0,0,0]
 
         # Set trace
         self.jointX = []
@@ -169,6 +178,11 @@ class GLWidget(QOpenGLWidget):
 #        self.update()
         self.updateFrame()
 
+    # rotation function
+    def rotate_mat(self, axis, radian):
+        rot_matrix = linalg.expm(np.cross(np.eye(3), axis / linalg.norm(axis) * radian))
+        return rot_matrix
+
     def drawSkeleton(self):
         def _RenderBone(quadObj, x0, y0, z0, x1, y1, z1):
             dir = [x1 - x0, y1 - y0, z1 - z0]
@@ -260,6 +274,7 @@ class GLWidget(QOpenGLWidget):
                 # Head
                 elif node.nodeIndex == 5:
                     glTranslatef(node.offset[0] * self.scale, node.offset[1] * self.scale, node.offset[2] * self.scale)
+                    # print(node.offset[0] * self.scale, node.offset[1] * self.scale, node.offset[2] * self.scale)
                     _RenderJoint(quadObj)
                 
                 elif node.nodeIndex == 6:
@@ -273,6 +288,7 @@ class GLWidget(QOpenGLWidget):
                 elif node.nodeIndex == 9:
                     glTranslatef(node.offset[0] * self.scale, node.offset[1] * self.scale, node.offset[2] * self.scale)
                     _RenderJoint(quadObj)
+                    # print(node.offset[0] * self.scale, node.offset[1] * self.scale, node.offset[2] * self.scale)
 
                 elif node.nodeIndex == 10:
                     glTranslatef(node.offset[0] * self.scale, node.offset[1] * self.scale, node.offset[2] * self.scale)
@@ -321,25 +337,44 @@ class GLWidget(QOpenGLWidget):
 
                     # _RenderJoint(quadObj)
                 # Rotation
+                
                 for i, channel in enumerate(node.chLabel):
+                    # print(node.chLabel)
                     if "Xrotation" in channel:
                         glRotatef(self.motion[self.frameCount][node.frameIndex + i], 1.0, 0.0, 0.0)
-                        # glRotatef(0.0, 1.0, 0.0, 0.0)
-                        # print(channel)
                         # print(self.motion[self.frameCount][node.frameIndex + i])
+                        rot_matrix = self.rotate_mat(self.rotate_axisX, self.motion[self.frameCount][node.frameIndex + i])
+                        pos = [node.offset[0] * self.scale, node.offset[1] * self.scale, node.offset[2] * self.scale]
+                        self.rot_posx = np.dot(rot_matrix, pos)
+                        # print(pos)
+                        # print(rot_posx)
+
+                        # print(self.motion[self.frameCount][node.frameIndex + i])
+
+                        # print(self.frameCount, node.nodeIndex)
                     elif "Yrotation" in channel:
                         glRotatef(self.motion[self.frameCount][node.frameIndex + i], 0.0, 1.0, 0.0)
-                        # glRotatef(0.0, 0.0, 1.0, 0.0)
+                        rot_matrix = self.rotate_mat(self.rotate_axisY, self.motion[self.frameCount][node.frameIndex + i])
+                        self.rot_posy = np.dot(rot_matrix, self.rot_posx)
+                        # print(self.frameCount, node.nodeIndex)
                     elif "Zrotation" in channel:
                         glRotatef(self.motion[self.frameCount][node.frameIndex + i], 0.0, 0.0, 1.0)
-                        # glRotatef(0.0, 0.0, 0.0, 1.0)
-                
+                        rot_matrix = self.rotate_mat(self.rotate_axisZ, self.motion[self.frameCount][node.frameIndex + i])
+                        self.rot_posz = np.dot(rot_matrix, self.rot_posy)
+                        print(self.rot_posz)
+
+                        # print(self.frameCount, node.nodeIndex)
+                    glColor3f(0.4,0.1,0.2)
+                    glPointSize(5)
+                    glBegin(GL_POINTS)
+                    glVertex3f(self.rot_posz[0],self.rot_posz[1],self.rot_posz[2])
+                    glEnd()
                 # Drawing Links
                 if node.fHaveSite:
                     _RenderBone(quadObj, 0.0, 0.0, 0.0, node.site[0] * self.scale, node.site[1] * self.scale, node.site[2] * self.scale)
                 # for child in node.childNode:
                     # _RenderBone(quadObj, 0.0, 0.0, 0.0, child.offset[0] * self.scale, child.offset[1] * self.scale, child.offset[2] * self.scale)
-                
+                '''
                 # draw trace
                 if len(self.jointX) > 1:
                     glColor3f(0.4,0.1,0.2) 
@@ -353,7 +388,7 @@ class GLWidget(QOpenGLWidget):
                                    self.jointX[i-1], 
                                    self.jointX[i-1])
                     glEnd()
-
+                '''
                 # Drawing Joint Sphere
                 # _RenderJoint(quadObj)
                 # print(quadObj)
@@ -424,12 +459,12 @@ class GLWidget(QOpenGLWidget):
                     glBegin(GL_LINES)
                     for i in range(len(self.stroke_posX)):
 
-                        glVertex3d(500 - self.stroke_posX[i],
-                                   500 - self.stroke_posY[i], 
-                                   self.camDist * np.sin(self.rotateXZ / 180.0)*0.5)
-                        glVertex3d(500 - self.stroke_posX[i-1], 
-                                   500 - self.stroke_posY[i-1], 
-                                   self.camDist * np.sin(self.rotateXZ / 180.0)*0.5)
+                        glVertex3d(self.camDist * np.sin(self.rotateXZ / 180.0)*0.5+100,
+                                   500 - self.stroke_posY[i]-200, 
+                                   500 - self.stroke_posX[i]-300)
+                        glVertex3d(self.camDist * np.sin(self.rotateXZ / 180.0)*0.5+100, 
+                                   500 - self.stroke_posY[i-1]-200, 
+                                   500 - self.stroke_posX[i-1]-300)
                     glEnd()    
         # if len(self.last_stroke_pos):
 
