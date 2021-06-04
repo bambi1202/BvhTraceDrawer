@@ -11,6 +11,7 @@ class InfoWidget(QGroupBox):
     def __init__(self, parent = None):
         super().__init__(parent)
         self.setTitle("Information")
+        self.setFixedSize(500,100)
 
         mainLayout = QVBoxLayout()
         self.fileNameLabel = QLabel()

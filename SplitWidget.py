@@ -22,6 +22,7 @@ class SplitWidget(QGroupBox):
 
     def __init__(self, parent = None):
         super().__init__(parent)
+        self.setFixedSize(500,300)
         self.hParentWidget = parent
         self.pathResourceDir = os.path.join(parent.pathCurrentDir, "IconResource")
         self.pathDstDir = parent.pathMotionFileDir
@@ -63,8 +64,8 @@ class SplitWidget(QGroupBox):
         self.splitDataGrid.setColumnWidth(0, 45)
         self.splitDataGrid.setColumnWidth(1, 84)
         self.splitDataGrid.setColumnWidth(2, 84)
-        self.splitDataGrid.setSelectionMode(QAbstractItemView.ContiguousSelection)
-        self.splitDataGrid.setSelectionBehavior(QAbstractItemView.SelectRows)
+        # self.splitDataGrid.setSelectionMode(QAbstractItemView.ContiguousSelection)
+        # self.splitDataGrid.setSelectionBehavior(QAbstractItemView.SelectRows)
 
         exportButtonsLayout = QHBoxLayout()
         self.dstinationButton = QPushButton("Destination...")

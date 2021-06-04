@@ -16,6 +16,11 @@ def readBVH(bvhAbsPath):
         frameIndex = 0
         tmpNode = None
 
+        motionInFrame = []
+        motionSeries = []
+        globalTraceX = []
+        globalTraceZ = []
+
         for line in bvhFile:
             # cutting line terminator
             line = line.rstrip("\n")
@@ -57,6 +62,7 @@ def readBVH(bvhAbsPath):
             raise ValueError("This File is not BVH Motion File.")
 
         isNewLine = lambda string: not string.rstrip("\n").rstrip("\r")
+        
         # get frames "Frames: xxx"
         line = bvhFile.readline()
         while isNewLine(line):
@@ -70,10 +76,28 @@ def readBVH(bvhAbsPath):
         frmTime = float(line.rsplit(None, 1)[1])
 
         # get "MOTION"part (List of List)
-        motionSeries = [([float(data) for data in line.split()] if not isNewLine(line) else None) for line in bvhFile]
+        # peng
+        for line in bvhFile: 
+            if not isNewLine(line):
+                for data in line.split():
+                    # print(data)
+                    motionInFrame.append(float(data))
+                    
+            # else:
+            #     motionInFrame = None      
+            motionSeries.append(motionInFrame)
+            globalTraceX.append(motionInFrame[0])
+            globalTraceZ.append(motionInFrame[2])
+            motionInFrame = [] 
+            # print(globalTraceX)
+
+             
+        # motionSeries = [([float(data) for data in line.split()] if not isNewLine(line) else None) for line in bvhFile]
+        
         try:
             while True:
                 motionSeries.remove(None)
+                # motionSeries.remove([])
         except ValueError:
             pass
 

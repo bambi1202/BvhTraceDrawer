@@ -24,6 +24,7 @@ class ControlWidget(QGroupBox):
         self.hParentWidget = parent
         self.pathResourceDir = os.path.join(parent.pathCurrentDir, "IconResource")
         self.setTitle("Control")
+        self.setFixedSize(500,100)
 
         playerLayout = QHBoxLayout()
         self.rewindButton = _createButton("rewind", 60, self.rewindButtonAction, os.path.join(self.pathResourceDir, "rewind-solid.svg"))

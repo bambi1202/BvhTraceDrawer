@@ -11,7 +11,8 @@ from PyQt5.Qt import *
 from OpenGL.GL import *
 from OpenGL.GLU import *
 
-from python_bvh import BVHNode, getNodeRoute
+# from python_bvh import BVHNode, getNodeRoute
+from python_bvh import BVHNode
 
 import glm
 import math
@@ -39,11 +40,22 @@ class GLWidget(QOpenGLWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.hParentWidget = parent
-        self.setMinimumSize(500, 500)
+        # self.setMinimumSize(500, 500)
+        self.resize(500,500)
         self.lastPos = QPoint()
-        self.matrixList = []
+        self.matrixList0 = []
+        self.matrixList1 = []
+        self.matrixList2 = []
+        self.matrixList3 = []
+        self.matrixList4 = []
+        self.matrixList5 = []
         self.matrixDict = {
-            '5': [],
+            '0': [],
+            '5': [], 
+            '9': [],
+            '13': [],
+            '16': [],
+            '20': []
         }
 
     def resetCamera(self):
@@ -98,11 +110,29 @@ class GLWidget(QOpenGLWidget):
         glPushMatrix()
         glCallList(self.floorObj)
         self.drawSkeleton()
+        # zhao
         self.drawTrajectory()
+        
+        # self.drawTraLine()
         glPopMatrix()
         glFlush()
 #        self.update()
         self.updateFrame()
+
+    def drawTraLine(self):
+        for i in range(0,23):
+            if i == 5 or i == 9 or i == 13 or i == 16 or i == 20:
+                for m in self.matrixDict[str(i)]:
+                    matrix = m.T
+                    # print(matrix)
+                    print('/')
+                    # for a in range(len(matrix)):
+                    #     if a > 0 :
+                    #         glColor3f(0.000, 1.052, 0.000)
+                    #         glBegin(GL_LINES)
+                    #         glVertex3f(matrix[a])
+                    #         glVertex3f(matrix[a-1])
+                    #         glEnd()
 
     def drawTrajectory(self):
         def _RenderJoint(quadObj):
@@ -124,14 +154,25 @@ class GLWidget(QOpenGLWidget):
                 glColor3f(0.000, 1.000, 0.000)
 
         if (self.root is not None) and (self.motion is not None):
-            for m in self.matrixList:
-                glPushMatrix()
-                matrix = m.T
-                glMultMatrixd((matrix[0, 0], matrix[1, 0], matrix[2, 0], matrix[3, 0], matrix[0, 1], matrix[1, 1], matrix[2, 1], matrix[3, 1],
-                            matrix[0, 2], matrix[1, 2], matrix[2, 2], matrix[3, 2], matrix[0, 3], matrix[1, 3], matrix[2, 3], matrix[3, 3]))
-                quadObj = None
-                _RenderJoint(quadObj)
-                glPopMatrix()
+            # for m in self.matrixList:
+            #     glPushMatrix()
+            #     matrix = m.T
+            #     glMultMatrixd((matrix[0, 0], matrix[1, 0], matrix[2, 0], matrix[3, 0], matrix[0, 1], matrix[1, 1], matrix[2, 1], matrix[3, 1],
+            #                 matrix[0, 2], matrix[1, 2], matrix[2, 2], matrix[3, 2], matrix[0, 3], matrix[1, 3], matrix[2, 3], matrix[3, 3]))
+            #     quadObj = None
+            #     _RenderJoint(quadObj)
+            #     glPopMatrix()
+            for i in range(0,23):
+                if i == 5 or i == 9 or i == 13 or i == 16 or i == 20:
+                    for m in self.matrixDict[str(i)]:
+                        glPushMatrix()
+                        matrix = m.T
+                        # print(matrix)
+                        glMultMatrixd((matrix[0, 0], matrix[1, 0], matrix[2, 0], matrix[3, 0], matrix[0, 1], matrix[1, 1], matrix[2, 1], matrix[3, 1],
+                                    matrix[0, 2], matrix[1, 2], matrix[2, 2], matrix[3, 2], matrix[0, 3], matrix[1, 3], matrix[2, 3], matrix[3, 3]))
+                        quadObj = None
+                        _RenderJoint(quadObj)
+                        glPopMatrix()
 
     def drawSkeleton(self):
         def _RenderBone(quadObj, x0, y0, z0, x1, y1, z1):
@@ -210,11 +251,38 @@ class GLWidget(QOpenGLWidget):
                         glRotatef(self.motion[self.frameCount][node.frameIndex + i], 0.0, 1.0, 0.0)
                     elif "Zrotation" in channel:
                         glRotatef(self.motion[self.frameCount][node.frameIndex + i], 0.0, 0.0, 1.0)
-
-                if (node.nodeIndex == 5 and len(self.matrixList) < self.frames):
-                    currentModelView = np.array(glGetFloatv(GL_MODELVIEW_MATRIX))
-                    self.matrixList.append(currentModelView)
                 
+
+                if (node.nodeIndex == 0 and len(self.matrixList1) < self.frames):
+                    currentModelView = np.array(glGetFloatv(GL_MODELVIEW_MATRIX))
+                    self.matrixList1.append(currentModelView)
+                    self.matrixDict['5'] = self.matrixList1
+                    # print(self.matrixDict)
+                # elif (node.nodeIndex == 9 and len(self.matrixList2) < self.frames):
+                #     currentModelView = np.array(glGetFloatv(GL_MODELVIEW_MATRIX))
+                #     self.matrixList2.append(currentModelView)
+                #     self.matrixDict['9'] = self.matrixList2
+                #     # print(self.matrixDict)
+                # elif (node.nodeIndex == 13 and len(self.matrixList3) < self.frames):
+                #     currentModelView = np.array(glGetFloatv(GL_MODELVIEW_MATRIX))
+                #     self.matrixList3.append(currentModelView)
+                #     self.matrixDict['13'] = self.matrixList3
+                #     # print(self.matrixDict)
+                # elif (node.nodeIndex == 16 and len(self.matrixList4) < self.frames):
+                #     currentModelView = np.array(glGetFloatv(GL_MODELVIEW_MATRIX))
+                #     self.matrixList4.append(currentModelView)
+                #     self.matrixDict['16'] = self.matrixList4
+                #     # print(self.matrixDict)
+                # elif (node.nodeIndex == 20 and len(self.matrixList5) < self.frames):
+                #     currentModelView = np.array(glGetFloatv(GL_MODELVIEW_MATRIX))
+                #     self.matrixList5.append(currentModelView)
+                #     self.matrixDict['20'] = self.matrixList5
+                #     # print(self.matrixDict)            
+                # elif (node.nodeIndex == 8 and len(self.matrixList0) < self.frames):
+                #     currentModelView = np.array(glGetFloatv(GL_MODELVIEW_MATRIX))
+                #     self.matrixList0.append(currentModelView)
+                #     self.matrixDict['0'] = self.matrixList0
+
                 # Drawing Links
                 if node.fHaveSite:
                     _RenderBone(quadObj, 0.0, 0.0, 0.0, node.site[0] * self.scale, node.site[1] * self.scale, node.site[2] * self.scale)
@@ -222,7 +290,7 @@ class GLWidget(QOpenGLWidget):
                     _RenderBone(quadObj, 0.0, 0.0, 0.0, child.offset[0] * self.scale, child.offset[1] * self.scale, child.offset[2] * self.scale)
                 
                 # Drawing Joint Sphere
-                # _RenderJoint(quadObj)
+                _RenderJoint(quadObj)
 
                 # Child drawing
                 for child in node.childNode:
