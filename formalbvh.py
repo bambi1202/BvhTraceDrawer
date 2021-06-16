@@ -6,6 +6,7 @@ import pickle
 
 root_dir = "bvhdata/"
 csv_stroke = []
+pick_globalTrace = []
 
 def readBVH(bvhAbsPath):
     u'''Read BVH file and parse to each parts
@@ -22,6 +23,9 @@ def readBVH(bvhAbsPath):
         motionSeries = []
         globalTraceX = []
         globalTraceZ = []
+        globalTraceY = []
+
+        globalTrace = []
 
         globalstroke = []
 
@@ -72,6 +76,8 @@ def readBVH(bvhAbsPath):
         while isNewLine(line):
             line = bvhFile.readline()
         frmNum = int(line.rsplit(None, 1)[1])
+        len_frame = frmNum
+        globalTrace = np.zeros((len_frame,3))
 
         # get frameTime "Frame Time: x.xx"
         line = bvhFile.readline()
@@ -83,21 +89,29 @@ def readBVH(bvhAbsPath):
         # peng
         for line in bvhFile: 
             if not isNewLine(line):
+
                 for data in line.split():
-                    # print(data)
+                    # print(line.split())
                     motionInFrame.append(float(data))
-                    
-            # else:
-            #     motionInFrame = None      
-            motionSeries.append(motionInFrame)
-            globalTraceX.append(motionInFrame[0])
-            globalTraceZ.append(motionInFrame[2])
-            motionInFrame = [] 
+
+                    # print('---------------------------------------------')      
+
+                motionSeries.append(motionInFrame)
+                globalTraceX.append(motionInFrame[0])
+                globalTraceY.append(motionInFrame[1])
+                globalTraceZ.append(motionInFrame[2])
+                motionInFrame = []
+        # print(len(globalTraceX))  
             # print(globalTraceX)
         for i in range(len(globalTraceX)):
             globalstroke.append((globalTraceX[i-1],globalTraceZ[i-1]))
         csv_stroke.append(globalstroke)
-        print(type(csv_stroke))
+        # print(globalTraceX)
+        globalTrace[:, 0] = globalTraceX
+        globalTrace[:, 1] = globalTraceY
+        globalTrace[:, 2] = globalTraceZ
+        pick_globalTrace.append(globalTrace)
+
              
         # motionSeries = [([float(data) for data in line.split()] if not isNewLine(line) else None) for line in bvhFile]
         
@@ -171,14 +185,21 @@ for file in os.listdir(root_dir):
     filein = open(file_name,"r")
     readBVH(file_name)
 
+# peng
 tocsv = pd.DataFrame(csv_stroke)
 tocsv.to_csv("csv/global.csv")
 
+# pickfile = open('csv/test_pick.pkl','wb')
+# pickle.dump(csv_stroke, pickfile)
+# pickfile.close()
+
+# 06.16
 pickfile = open('csv/test_pick.pkl','wb')
-pickle.dump(csv_stroke, pickfile)
+pickle.dump(pick_globalTrace, pickfile)
 pickfile.close()
 
-with open('csv/test_pick.pkl','rb') as file:
-    pkl_stroke = pickle.load(file)
-print(pkl_stroke)
+
+# with open('csv/test_pick.pkl','rb') as file:
+#     pkl_stroke = pickle.load(file)
+# print(pkl_stroke[0])
 

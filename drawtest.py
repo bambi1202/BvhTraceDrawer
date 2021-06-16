@@ -3,17 +3,23 @@ from PyQt5.QtWidgets import QMainWindow,QApplication,QWidget,QMessageBox,QLineEd
 from PyQt5.QtGui import QIcon,QPixmap,QPainter,QPen,QColor,QBrush,QFont
 from PyQt5.QtCore import Qt,QRect
 
+
+# from PyQt5.Qt import *
 import math
 import numpy as np
 import csv
 import pandas as pd
 import pickle
+import similaritymeasures
 
 sys.setrecursionlimit(3000)
 
 class mylable(QLabel):
+    fPlayMode = False
+    hParentWidget = None
     def __init__(self,parent=None):
         super().__init__(parent)
+        self.hParentWidget = parent
         self.pixmap = QPixmap(500, 498)#考虑边框的间距 减去px
         self.pixmap.fill(Qt.white)
         self.setStyleSheet("border: 2px solid red")
@@ -30,6 +36,7 @@ class mylable(QLabel):
         self.queryy = []
         self.point = []
         self.query_stroke = []
+        
 
         self.csvfile = open("csv/global.csv")
         self.reader = csv.reader(self.csvfile)
@@ -45,8 +52,8 @@ class mylable(QLabel):
         # self.df = pd.read_csv('csv/global.csv', skiprows = 1, header = None)
         # print(self.df)
     def paintEvent(self,event):
-        #super().paintEvent(event)
-        self.pixmap.fill(Qt.white)
+        super().paintEvent(event)
+        # self.pixmap.fill(Qt.white)
         painter=QPainter(self.pixmap)
         painter.setPen(QPen(self.Color,self.penwidth,Qt.SolidLine))
         painter.drawLine(self.x0, self.y0, self.x1, self.y1)
@@ -65,12 +72,36 @@ class mylable(QLabel):
             self.y0 = self.y1
             self.x1 = event.x()
             self.y1 = event.y()
+
+            # 06.16
+            self.queryx.append(self.x1)
+            self.queryy.append(self.y1)
+            
+
             self.point = (self.x1-250, self.y1-250)
             self.query_stroke.append(self.point)
             self.update()
         # print(self.query_stroke)
     def mouseReleaseEvent(self, event):
         self.flag=False
+        # 06.16
+    
+        self.test_stroke =- np.zeros((len(self.queryx),3))
+        self.test_stroke[:,0] = self.queryx
+        self.test_stroke[:,1] = self.queryy
+        # print(self.test_stroke)        
+
+        pickfile = open('csv/teststk_pick.pkl','wb')
+        pickle.dump(self.test_stroke, pickfile)
+        pickfile.close()
+
+        with open('csv/test_pick.pkl','rb') as file:
+            pkl_stroke = pickle.load(file)
+        for i in range(len(pkl_stroke)):
+            df = similaritymeasures.frechet_dist(self.test_stroke, pkl_stroke[i])
+            print(df)
+
+
         ''' 
         for row in self.reader:
             if self.reader.line_num == 1:
@@ -94,6 +125,7 @@ class mylable(QLabel):
         res_ttl = []
         res_rank = []
         num_rank = []
+        '''
         for i in range(len(self.pkl_stroke)):
             similarity_res = self.frechet_distance(self.query_stroke, self.pkl_stroke[i])
             # print(similarity_res)
@@ -115,7 +147,9 @@ class mylable(QLabel):
         pickfile = open('csv/rank_fln.pkl','wb')
         pickle.dump(num_rank, pickfile)
         pickfile.close()
-        self.query_stroke = []
+        '''
+        # print(self.query_stroke)
+        # self.query_stroke = []
 
     def euc_dist(self, pt1, pt2):
         return math.sqrt((pt2[0]-pt1[0])*(pt2[0]-pt1[0])+(pt2[1]-pt1[1])*(pt2[1]-pt1[1]))
