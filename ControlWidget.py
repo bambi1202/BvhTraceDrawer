@@ -29,7 +29,21 @@ class ControlWidget(QGroupBox):
         self.setFixedSize(500,150)
         self.xy = 0
         self.zy = 0
-        self.zx = 0
+        self.zx = 75
+
+        pfxy = open('csv/xy.pkl','wb')
+        pickle.dump(0, pfxy)
+        pfxy.close() 
+
+        pfzy = open('csv/zy.pkl','wb')
+        pickle.dump(0, pfzy)
+        pfzy.close() 
+
+        pfzx = open('csv/xy.pkl','wb')
+        pickle.dump(75, pfzx)
+        pfzx.close() 
+
+
 
         playerLayout = QHBoxLayout()
         self.rewindButton = _createButton("rewind", 60, self.rewindButtonAction, os.path.join(self.pathResourceDir, "rewind-solid.svg"))
@@ -75,14 +89,18 @@ class ControlWidget(QGroupBox):
 
 
         camCtlLayout = QHBoxLayout()
-        self.camResetButton = _createButton("Camera Reset", 200, self.hParentWidget.drawPanel.resetCamera)
+        self.camResetButton = _createButton("Camera Reset", 100, self.hParentWidget.drawPanel.resetCamera)
         camCtlLayout.addWidget(self.camResetButton)
         self.camResetButton.setFocusPolicy(Qt.NoFocus)
         # slider 06.16
-        self.canvasButton = _createButton("showCanvas", 200, self.hParentWidget.drawPanel.canvasShow)
+        self.canvasButton = _createButton("showCanvas", 100, self.hParentWidget.drawPanel.canvasShow)
         camCtlLayout.addWidget(self.canvasButton)
         self.canvasButton.setFocusPolicy(Qt.NoFocus)
 
+        self.initButton = _createButton("setInit", 100, self.hParentWidget.drawPanel.setInit)
+        camCtlLayout.addWidget(self.initButton)
+        self.initButton.setFocusPolicy(Qt.NoFocus)
+        
         sliderLayout = QHBoxLayout()
         self.initrotationxy = QSlider(Qt.Horizontal)
         sliderLayout.addWidget(self.initrotationxy)
@@ -103,17 +121,32 @@ class ControlWidget(QGroupBox):
         self.initrotationzx.valueChanged.connect(self.initrotationzxUpdate)
         
         switchLayout = QHBoxLayout()
-        self.zxButton = _createButton("zxCanvas", 150, self.hParentWidget.drawPanel.zxSwitch)
+        self.zxButton = _createButton("zxCanvas", 100, self.hParentWidget.drawPanel.zxSwitch)
         switchLayout.addWidget(self.zxButton)
         self.zxButton.setFocusPolicy(Qt.NoFocus)
 
-        self.zyButton = _createButton("zyCanvas", 150, self.hParentWidget.drawPanel.zySwitch)
+        self.zyButton = _createButton("zyCanvas", 100, self.hParentWidget.drawPanel.zySwitch)
         switchLayout.addWidget(self.zyButton)
         self.zyButton.setFocusPolicy(Qt.NoFocus)
 
-        self.xyButton = _createButton("xyCanvas", 150, self.hParentWidget.drawPanel.xySwitch)
+        self.xyButton = _createButton("xyCanvas", 100, self.hParentWidget.drawPanel.xySwitch)
         switchLayout.addWidget(self.xyButton)
         self.xyButton.setFocusPolicy(Qt.NoFocus)
+
+        # 07.13
+        localLayout = QHBoxLayout()
+        self.local_zxButton = _createButton("local_zx", 100, self.hParentWidget.drawPanel.zxLocal)
+        localLayout.addWidget(self.local_zxButton)
+        self.local_zxButton.setFocusPolicy(Qt.NoFocus)
+
+        self.local_zyButton = _createButton("local_zy", 100, self.hParentWidget.drawPanel.zyLocal)
+        localLayout.addWidget(self.local_zyButton)
+        self.local_zyButton.setFocusPolicy(Qt.NoFocus)
+
+        self.local_xyButton = _createButton("local_xy", 100, self.hParentWidget.drawPanel.xyLocal)
+        localLayout.addWidget(self.local_xyButton)
+        self.local_xyButton.setFocusPolicy(Qt.NoFocus)
+
         
 
         mainLayout = QVBoxLayout()
@@ -121,6 +154,7 @@ class ControlWidget(QGroupBox):
         mainLayout.addLayout(camCtlLayout)
         mainLayout.addLayout(sliderLayout)
         mainLayout.addLayout(switchLayout)
+        mainLayout.addLayout(localLayout)
         self.setLayout(mainLayout)
 
     def initrotationxyUpdate(self,value):

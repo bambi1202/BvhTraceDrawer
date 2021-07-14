@@ -17,7 +17,8 @@ from OpenGL.GLU import *
 
 # from python_bvh import BVHNode, getNodeRoute
 from python_bvh import BVHNode, BVH
-
+from writebvh import editBVH
+# from editjoint import jointeditBVH
 
 import glm
 import math
@@ -82,6 +83,10 @@ class GLWidget(QOpenGLWidget):
         with open('csv/test_pick.pkl','rb') as file:
             self.pkl_stroke = pickle.load(file)
         
+
+        with open('csv/jointpos_pick.pkl','rb') as file:
+            self.jointpos = pickle.load(file)   
+        # print(self.jointpos) 
         
 
 
@@ -97,6 +102,22 @@ class GLWidget(QOpenGLWidget):
             self.canvas = False
         else:
             self.canvas = True
+
+    def setInit(self):
+        with open('csv/xy.pkl','rb') as file:
+           self.xy = pickle.load(file)
+        with open('csv/zy.pkl','rb') as file:
+           self.zy = pickle.load(file)
+        with open('csv/zx.pkl','rb') as file:
+           self.zx = pickle.load(file)
+        
+        # print(self.xy)
+        # print(self.zy)
+        # print(self.zx)
+        file = 'normalized/143_1_n.bvh'
+        editBVH(file, self.xy, self.zy, self.zx)
+
+
 
     def setMotion(self, root:BVHNode, motion, frames:int, frameTime:float):
         self.root = root
@@ -132,7 +153,7 @@ class GLWidget(QOpenGLWidget):
 
     def updateFrame(self):
         if (self.frames is not None) and (self.frameTime is not None):
-            print('play')
+            # print('play')
             now = time.time()
             if self.isPlaying:
                 self.frameCount += int(1 * self.fastRatio) if abs(self.fastRatio) >= 1.0 else 1
@@ -246,7 +267,7 @@ class GLWidget(QOpenGLWidget):
             #     _RenderJoint(quadObj)
             #     glPopMatrix()
             for i in range(0,23):
-                if i == 5 or i == 9 or i == 13 or i == 16 or i == 20:
+                if i ==0 or i == 5 or i == 9 or i == 13 or i == 16 or i == 20:
                     for m in self.matrixDict[str(i)]:
                         glPushMatrix()
                         matrix = m.T
@@ -330,19 +351,27 @@ class GLWidget(QOpenGLWidget):
                     glTranslatef(node.offset[0] * self.scale, node.offset[1] * self.scale, node.offset[2] * self.scale)
 
                 # Rotation
+                # 07.13
                 for i, channel in enumerate(node.chLabel):
                     if "Xrotation" in channel:
-                        glRotatef(self.motion[self.frameCount][node.frameIndex + i], 1.0, 0.0, 0.0)
+                        glRotatef(self.motion[self.frameCount-1][node.frameIndex + i], 1.0, 0.0, 0.0)
                     elif "Yrotation" in channel:
-                        glRotatef(self.motion[self.frameCount][node.frameIndex + i], 0.0, 1.0, 0.0)
+                        glRotatef(self.motion[self.frameCount-1][node.frameIndex + i], 0.0, 1.0, 0.0)
                     elif "Zrotation" in channel:
-                        glRotatef(self.motion[self.frameCount][node.frameIndex + i], 0.0, 0.0, 1.0)
+                        glRotatef(self.motion[self.frameCount-1][node.frameIndex + i], 0.0, 0.0, 1.0)
+                # for i, channel in enumerate(node.chLabel):
+                #     if "Xrotation" in channel:
+                #         glRotatef(self.motion[self.frameCount][node.frameIndex + i], 1.0, 0.0, 0.0)
+                #     elif "Yrotation" in channel:
+                #         glRotatef(self.motion[self.frameCount][node.frameIndex + i], 0.0, 1.0, 0.0)
+                #     elif "Zrotation" in channel:
+                #         glRotatef(self.motion[self.frameCount][node.frameIndex + i], 0.0, 0.0, 1.0)
                 
 
-                # if (node.nodeIndex == 0 and len(self.matrixList1) < self.frames):
-                #     currentModelView = np.array(glGetFloatv(GL_MODELVIEW_MATRIX))
-                #     self.matrixList1.append(currentModelView)
-                #     self.matrixDict['5'] = self.matrixList1
+                if (node.nodeIndex == 0 and len(self.matrixList1) < self.frames):
+                    currentModelView = np.array(glGetFloatv(GL_MODELVIEW_MATRIX))
+                    self.matrixList1.append(currentModelView)
+                    self.matrixDict['0'] = self.matrixList1
                     # print(self.matrixDict)
                 # elif (node.nodeIndex == 9 and len(self.matrixList2) < self.frames):
                 #     currentModelView = np.array(glGetFloatv(GL_MODELVIEW_MATRIX))
@@ -367,7 +396,7 @@ class GLWidget(QOpenGLWidget):
                 # elif (node.nodeIndex == 8 and len(self.matrixList0) < self.frames):
                 #     currentModelView = np.array(glGetFloatv(GL_MODELVIEW_MATRIX))
                 #     self.matrixList0.append(currentModelView)
-                #     self.matrixDict['0'] = self.matrixList0
+                #     self.matrixDict['8'] = self.matrixList0
 
                 # Drawing Links
                 if node.fHaveSite:
@@ -660,6 +689,53 @@ class GLWidget(QOpenGLWidget):
         for i in range(len(self.pkl_stroke)):
             df = similaritymeasures.frechet_dist(test_stroke, self.pkl_stroke[i])
             print(df)
+
+    # 07.13
+    def zxLocal(self):
+        with open('csv/teststk_pick.pkl','rb') as file:
+            test_stroke = pickle.load(file)
+        # print(len(test_stroke))
+        query_stroke = np.zeros((len(test_stroke),3))
+        query_stroke[:,0] = test_stroke[:,0]
+        query_stroke[:,1] = test_stroke[:,1]
+        self.score = []
+        for i in range(len(self.jointpos)):
+            df = similaritymeasures.frechet_dist(test_stroke, self.jointpos[i])
+            # print(df)
+            self.score.append(df)
+        self.rank = np.argsort(self.score)
+        print(self.rank[0])
+        # jointeditBVH("testbvh/",self.rank[0])
+
+    def zyLocal(self):
+        with open('csv/teststk_pick.pkl','rb') as file:
+            test_stroke = pickle.load(file)
+        # print(len(test_stroke))
+        query_stroke = np.zeros((len(test_stroke),3))
+        query_stroke[:,1] = test_stroke[:,0]
+        query_stroke[:,2] = test_stroke[:,1]
+        self.score = []
+        for i in range(len(self.jointpos)):
+            df = similaritymeasures.frechet_dist(test_stroke, self.jointpos[i])
+            # print(df)
+            self.score.append(df)
+        self.rank = np.argsort(self.score)
+        print(self.rank[0])
+
+    def xyLocal(self):
+        with open('csv/teststk_pick.pkl','rb') as file:
+            test_stroke = pickle.load(file)
+        # print(len(test_stroke))
+        query_stroke = np.zeros((len(test_stroke),3))
+        query_stroke[:,0] = test_stroke[:,0]
+        query_stroke[:,2] = test_stroke[:,1]
+        self.score = []
+        for i in range(len(self.jointpos)):
+            df = similaritymeasures.frechet_dist(test_stroke, self.jointpos[i])
+            # print(df)  
+            self.score.append(df)
+        self.rank = np.argsort(self.score)
+        print(self.rank[0])  
 
 #    def keyPressEvent(self, event:QKeyEvent):
 #        if event.key() == Qt.Key_Escape:

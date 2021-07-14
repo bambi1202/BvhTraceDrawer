@@ -89,7 +89,7 @@ class mylable(QLabel):
         self.test_stroke =- np.zeros((len(self.queryx),3))
         self.test_stroke[:,0] = self.queryx
         self.test_stroke[:,1] = self.queryy
-        # print(self.test_stroke)        
+        print(self.test_stroke)        
 
         pickfile = open('csv/teststk_pick.pkl','wb')
         pickle.dump(self.test_stroke, pickfile)

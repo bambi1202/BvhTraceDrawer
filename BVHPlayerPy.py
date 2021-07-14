@@ -17,7 +17,7 @@ from SplitWidget import SplitWidget
 from python_bvh import BVH
 
 from drawtest import mylable
-from globalWidget import Example
+# from globalWidget import Example
 
 
 class BVHPlayerPy(QMainWindow):

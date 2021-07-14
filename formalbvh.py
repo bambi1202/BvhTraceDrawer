@@ -100,7 +100,9 @@ def readBVH(bvhAbsPath):
                 globalTraceX.append(motionInFrame[0])
                 globalTraceY.append(motionInFrame[1])
                 globalTraceZ.append(motionInFrame[2])
+                print(len(motionInFrame))
                 motionInFrame = []
+        # print(len(motionInFrame))
         # print(len(globalTraceX))  
             # print(globalTraceX)
         for i in range(len(globalTraceX)):
@@ -110,6 +112,10 @@ def readBVH(bvhAbsPath):
         globalTrace[:, 0] = globalTraceX
         globalTrace[:, 1] = globalTraceY
         globalTrace[:, 2] = globalTraceZ
+
+        # 06.29
+        
+
         pick_globalTrace.append(globalTrace)
 
              
