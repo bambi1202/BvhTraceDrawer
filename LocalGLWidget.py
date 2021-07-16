@@ -14,16 +14,17 @@ from OpenGL.GLU import *
 from python_bvh import BVHNode, getNodeRoute
 
 import glm
+from pyrr import Matrix44, Vector3, vector
 import math
 
-class GLWidget(QOpenGLWidget):
+class LocalGLWidget(QOpenGLWidget):
     frameChanged = pyqtSignal(int)
     hParentWidget = None
     checkerBoardSize = 50
     camDist = 500
     floorObj = None
     rotateXZ = 0
-    rotateY = 45
+    rotateY = 180
     translateX = 0
     translateY = 0
     frameCount = 0
@@ -35,6 +36,9 @@ class GLWidget(QOpenGLWidget):
     frames = None
     frameTime = None
     drawMode = 0    # 0:rotation, 1:position
+    currentProject = None
+    trajectoryFlag = False
+    screenCoords = {'x': [], 'y': []}
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -59,13 +63,14 @@ class GLWidget(QOpenGLWidget):
 
     def resetCamera(self):
         self.rotateXZ = 0
-        self.rotateY = 45
+        self.rotateY = 90
         self.translateX = 0
         self.translateY = 0
         self.camDist = 500
 
     def setMotion(self, root:BVHNode, motion, frames:int, frameTime:float):
         self.root = root
+        print(root.getNodeI(5).nodeName)
         self.motion = motion
         self.frames = frames
         self.frameTime = frameTime
@@ -99,17 +104,36 @@ class GLWidget(QOpenGLWidget):
         glLoadIdentity()
         qs = self.sizeHint()
         gluPerspective(60.0, float(qs.width()) / float(qs.height()), 1.0, 1000.0)
-        camPx = self.camDist * np.cos(self.rotateXZ / 180.0)
-        camPy = self.camDist * np.tanh(self.rotateY / 180.0)
-        camPz = self.camDist * np.sin(self.rotateXZ / 180.0)
-        transX = self.translateX * -np.sin(self.rotateXZ / 180.0)
-        transZ = self.translateX * np.cos(self.rotateXZ / 180.0)
-        gluLookAt(camPx + transX, camPy + self.translateY, camPz + transZ, transX, self.translateY, transZ, 0.0, 1.0, 0.0)
+        if self.matrixDict['0']['flag'] and self.matrixDict['RightUpLeg']['flag']:
+            root_matrix = self.matrixDict['0']['data'][self.frameCount]
+            rightupleg_matrix = self.matrixDict['RightUpLeg']['data'][self.frameCount]
+            root_matrix44 = Matrix44(root_matrix)
+            rightupleg_matrix44 = Matrix44(rightupleg_matrix)
+            origin = Vector3([0., 0., 0.])
+            root_coord = root_matrix44 * origin
+            rightupleg_coord = rightupleg_matrix44 * origin
+            norm_vec = vector.normalise(root_coord - rightupleg_coord)
+            eye = root_coord - norm_vec * 200
+            center = root_coord
+            gluLookAt(eye.x, eye.y, eye.z, center.x, center.y, center.z, 0, 1, 0)
+            self.currentProject = np.array(glGetFloatv(GL_PROJECTION_MATRIX))
+            self.trajectoryFlag = True
+        else:
+            camPx = self.camDist * np.cos(self.rotateXZ / 180.0)
+            camPy = self.camDist * np.tanh(self.rotateY / 180.0)
+            camPz = self.camDist * np.sin(self.rotateXZ / 180.0)
+            transX = self.translateX * -np.sin(self.rotateXZ / 180.0)
+            transZ = self.translateX * np.cos(self.rotateXZ / 180.0)
+            gluLookAt(camPx + transX, camPy + self.translateY, camPz + transZ, transX, self.translateY, transZ, 0.0, 1.0, 0.0)
         glMatrixMode(GL_MODELVIEW)
         glPushMatrix()
         glCallList(self.floorObj)
         self.drawSkeleton()
-        self.drawTrajectory()
+        if self.trajectoryFlag:
+            self.drawTrajectory()
+        if len(self.screenCoords['x']) == self.frames:
+            print(self.frames)
+            print(self.screenCoords)
         glPopMatrix()
         glFlush()
 #        self.update()
@@ -119,6 +143,7 @@ class GLWidget(QOpenGLWidget):
         def _RenderJoint(quadObj):
             if quadObj is None:
                 quadObj = GLUQuadric()
+            glDisable(GL_DEPTH_TEST)
             gluQuadricDrawStyle(quadObj, GLU_FILL)
             gluQuadricNormals(quadObj, GLU_SMOOTH)
 
@@ -134,16 +159,33 @@ class GLWidget(QOpenGLWidget):
                 glColor3f(1.000, 0.271, 0.000)
             else:                   # position mode
                 glColor3f(0.000, 1.000, 0.000)
+            glEnable(GL_DEPTH_TEST)
 
         if (self.root is not None) and (self.motion is not None):
-            for m in self.matrixDict['RightHand']['data']:
+            if len(self.screenCoords['x']) < self.frames:
+                m = self.matrixDict['RightHand']['data'][self.frameCount]
                 glPushMatrix()
                 matrix = m.T
-                glMultMatrixd((matrix[0, 0], matrix[1, 0], matrix[2, 0], matrix[3, 0], matrix[0, 1], matrix[1, 1], matrix[2, 1], matrix[3, 1],
-                            matrix[0, 2], matrix[1, 2], matrix[2, 2], matrix[3, 2], matrix[0, 3], matrix[1, 3], matrix[2, 3], matrix[3, 3]))
-                quadObj = None
-                _RenderJoint(quadObj)
+                currentModelView = np.array(glGetFloatv(GL_MODELVIEW_MATRIX))
+                modelview = glm.mat4(currentModelView.T)
+                original = glm.mat4(matrix) * glm.vec4(0, 0, 0, 1)
+                viewport = glm.vec4(0.0, 0.0, 500.0, 500.0)
+                projection = glm.mat4(self.currentProject.T)
+                # print(modelview, original, viewport, projection)
+                coords = glm.project(glm.vec3(original), modelview, projection, viewport)
+                # print(coords.x, coords.y)
+                
+                assert len(self.screenCoords['x']) == len(self.screenCoords['y'])
+                # assert self.frameCount == len(self.screenCoords['x'])
+                self.screenCoords['x'].append(coords.x)
+                self.screenCoords['y'].append(coords.y)
                 glPopMatrix()
+
+            # glMultMatrixd((matrix[0, 0], matrix[1, 0], matrix[2, 0], matrix[3, 0], matrix[0, 1], matrix[1, 1], matrix[2, 1], matrix[3, 1],
+            #             matrix[0, 2], matrix[1, 2], matrix[2, 2], matrix[3, 2], matrix[0, 3], matrix[1, 3], matrix[2, 3], matrix[3, 3]))
+            # quadObj = None
+            # _RenderJoint(quadObj)
+            
 
     def drawSkeleton(self):
         def _RenderBone(quadObj, x0, y0, z0, x1, y1, z1):

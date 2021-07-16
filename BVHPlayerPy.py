@@ -6,25 +6,20 @@
 
 import sys
 import os
-import pickle
-from ctypes import windll
+# from ctypes import windll
 from PyQt5.Qt import *
 
 from GLWidget import GLWidget
+from LocalGLWidget import LocalGLWidget
 from InfoWidget import InfoWidget
 from ControlWidget import ControlWidget
 from SplitWidget import SplitWidget
 from python_bvh import BVH
 
-from drawtest import mylable
-# from globalWidget import Example
-
-
 class BVHPlayerPy(QMainWindow):
     def __init__(self, pathCD):
         super().__init__()
-        # self.setMaximumSize(800, 500)
-        self.resize(1600,600)
+        self.setMaximumSize(800, 600)
         
         self.pathCurrentDir = pathCD
         self.pathMotionFileDir = pathCD.rstrip(os.path.basename(pathCD))
@@ -32,17 +27,12 @@ class BVHPlayerPy(QMainWindow):
         self.setCentralWidget(self.initComponent())
         menuBar = self.menuBar()
         menuBar.setNativeMenuBar(False)
-        # self.setMaximumSize(1600, 900)
 
         fileMenu = menuBar.addMenu("&File")
         loadAction = QAction("&Open...", self)
         loadAction.triggered.connect(self.loadFile)
         loadAction.setShortcut("Ctrl+l")
         fileMenu.addAction(loadAction)
-        playAction = QAction("&Play...",self)
-        playAction.triggered.connect(self.playFile)
-        playAction.setShortcut("Ctrl+p")
-        fileMenu.addAction(playAction)
         quitAction = QAction("&Quit...", self)
         quitAction.triggered.connect(self.quit)
         quitAction.setShortcut("Ctrl+q")
@@ -52,33 +42,21 @@ class BVHPlayerPy(QMainWindow):
 
     def initComponent(self):
         self.drawPanel = GLWidget(self)
+        self.localdrawPanel = LocalGLWidget(self)
         self.infoPanel = InfoWidget(self)
         self.controlPanel = ControlWidget(self)
         self.splitterPanel = SplitWidget(self)
-
-        self.globalPanel = mylable(self)
-
         controlLayout = QVBoxLayout()
         controlLayout.addWidget(self.infoPanel)
         controlLayout.addWidget(self.controlPanel)
-        # controlLayout.addWidget(self.globalPanel)
         controlLayout.addWidget(self.splitterPanel)
-
-        subLayout = QVBoxLayout()
-        subLayout.addWidget(self.globalPanel)
-        
 
         mainLayout = QHBoxLayout()
         mainLayout.addWidget(self.drawPanel)
-        
+        mainLayout.addWidget(self.localdrawPanel)
         mainLayout.addLayout(controlLayout)
-        mainLayout.addWidget(self.globalPanel)
-        
-        
-        
         mainWidget = QWidget()
         mainWidget.setLayout(mainLayout)
-        # mainWidget.setLayout(subLayout)
 
         return mainWidget
 
@@ -94,23 +72,11 @@ class BVHPlayerPy(QMainWindow):
             root, motion, frames, frameTime = BVH.readBVH(filePath[0])
             self.pathMotionFileDir = os.path.dirname(filePath[0])
             self.drawPanel.setMotion(root, motion, frames, frameTime)
+            self.localdrawPanel.setMotion(root, motion, frames, frameTime)
             self.infoPanel.initInfo(os.path.basename(filePath[0]), frameTime, frames)
             self.controlPanel.setPlayMode(True)
             self.splitterPanel.setActive()
             self.splitterPanel.initMotionData(os.path.basename(filePath[0]), root, motion, frameTime)
-
-    def playFile(self):
-        with open('csv/rank_fln.pkl','rb') as file:
-            file_rank=pickle.load(file)
-            print(file_rank)
-            filePath = 'bvhdata/143_'+str(file_rank[0])+'.bvh'
-            root, motion, frames, frameTime = BVH.readBVH(filePath)
-            self.pathMotionFileDir = os.path.dirname(filePath)
-            self.drawPanel.setMotion(root, motion, frames, frameTime)
-            self.infoPanel.initInfo(os.path.basename(filePath), frameTime, frames)
-            self.controlPanel.setPlayMode(True)
-            self.splitterPanel.setActive()
-            self.splitterPanel.initMotionData(os.path.basename(filePath), root, motion, frameTime)
 
     def keyPressEvent(self, event:QKeyEvent):
         if event.key() == Qt.Key_Escape:
@@ -143,8 +109,8 @@ if __name__ == "__main__":
     else:
         pathCD = os.path.dirname(__file__)
 
-    user32 = windll.user32
-    user32.SetProcessDPIAware()
+    # user32 = windll.user32
+    # user32.SetProcessDPIAware()
     app = QApplication(sys.argv)
     player = BVHPlayerPy(pathCD)
     player.show()

@@ -3,6 +3,7 @@ u'''BVH Parser Module
 read(parse), write and other operate functions'''
 import csv
 import numpy as np
+import copy
 
 # BVH file read & parse to Node & Motion Matrix
 def readBVH(bvhAbsPath):
@@ -264,7 +265,7 @@ class BVHNode:
         if self.fHaveSite:
             return None
         for node in self.childNode:
-            retNode = node.getNode(index)
+            retNode = node.getNodeI(index)
             if retNode != None:
                 return retNode
 
@@ -288,3 +289,17 @@ class BVHNode:
         for child in self.childNode:
             nodelist.extend(child.getNodeList())
         return nodelist
+    
+def getNodeRoute(arr, index, routelist):
+    nodelist = copy.copy(routelist)
+    for n in arr:
+        nodelist.append(n.nodeIndex)
+        if n.nodeIndex == index:
+            return nodelist
+        child = n.childNode
+        if len(child) > 0:
+            rst = getNodeRoute(child, index, nodelist)
+            if (rst):
+                return rst
+        nodelist.pop(-1)
+    return False
