@@ -14,6 +14,7 @@ from LocalGLWidget import LocalGLWidget
 from InfoWidget import InfoWidget
 from ControlWidget import ControlWidget
 from SplitWidget import SplitWidget
+from paintWidget import PaintWidget
 from python_bvh import BVH
 
 class BVHPlayerPy(QMainWindow):
@@ -42,6 +43,7 @@ class BVHPlayerPy(QMainWindow):
 
     def initComponent(self):
         self.drawPanel = GLWidget(self)
+        self.paintPanel = PaintWidget(self)
         self.localdrawPanel = LocalGLWidget(self)
         self.infoPanel = InfoWidget(self)
         self.controlPanel = ControlWidget(self)
@@ -52,6 +54,7 @@ class BVHPlayerPy(QMainWindow):
         controlLayout.addWidget(self.splitterPanel)
 
         mainLayout = QHBoxLayout()
+        mainLayout.addWidget(self.paintPanel)
         mainLayout.addWidget(self.drawPanel)
         mainLayout.addWidget(self.localdrawPanel)
         mainLayout.addLayout(controlLayout)

@@ -43,15 +43,15 @@ class GLWidget(QOpenGLWidget):
         self.lastPos = QPoint()
         self.matrixList = []
         self.matrixDict = {
-            '0': {
+            'hip': {
                 'data': [],
                 'flag': False
             },
-            'RightUpLeg': {
+            'rButtock': {
                 'data': [],
                 'flag': False
             },
-            'RightHand': {
+            'rHand': {
                 'data': [],
                 'flag': False
             }
@@ -104,7 +104,13 @@ class GLWidget(QOpenGLWidget):
         camPz = self.camDist * np.sin(self.rotateXZ / 180.0)
         transX = self.translateX * -np.sin(self.rotateXZ / 180.0)
         transZ = self.translateX * np.cos(self.rotateXZ / 180.0)
+        # self.currentProject = np.array(glGetFloatv(GL_PROJECTION_MATRIX))
+        # print(self.currentProject)
         gluLookAt(camPx + transX, camPy + self.translateY, camPz + transZ, transX, self.translateY, transZ, 0.0, 1.0, 0.0)
+        # self.currentProject = np.array(glGetFloatv(GL_PROJECTION_MATRIX))
+        # print(self.currentProject)
+        # exit()
+        # print(camPx + transX, camPy + self.translateY, camPz + transZ, transX, self.translateY, transZ, 0.0, 1.0, 0.0)
         glMatrixMode(GL_MODELVIEW)
         glPushMatrix()
         glCallList(self.floorObj)
@@ -136,7 +142,7 @@ class GLWidget(QOpenGLWidget):
                 glColor3f(0.000, 1.000, 0.000)
 
         if (self.root is not None) and (self.motion is not None):
-            for m in self.matrixDict['RightHand']['data']:
+            for m in self.matrixDict['rHand']['data']:
                 glPushMatrix()
                 matrix = m.T
                 glMultMatrixd((matrix[0, 0], matrix[1, 0], matrix[2, 0], matrix[3, 0], matrix[0, 1], matrix[1, 1], matrix[2, 1], matrix[3, 1],
@@ -223,26 +229,26 @@ class GLWidget(QOpenGLWidget):
                     elif "Zrotation" in channel:
                         glRotatef(self.motion[self.frameCount][node.frameIndex + i], 0.0, 0.0, 1.0)
 
-                if node.nodeIndex == 0:
-                    if len(self.matrixDict['0']['data']) < self.frames:
+                if node.nodeName == 'hip':
+                    if len(self.matrixDict['hip']['data']) < self.frames:
                         currentModelView = np.array(glGetFloatv(GL_MODELVIEW_MATRIX))
-                        self.matrixDict['0']['data'].append(currentModelView)
+                        self.matrixDict['hip']['data'].append(currentModelView)
                     else:
-                        self.matrixDict['0']['flag'] = True
+                        self.matrixDict['hip']['flag'] = True
 
-                if node.nodeName == 'RightUpLeg':
-                    if len(self.matrixDict['RightUpLeg']['data']) < self.frames:
+                if node.nodeName == 'rButtock':
+                    if len(self.matrixDict['rButtock']['data']) < self.frames:
                         currentModelView = np.array(glGetFloatv(GL_MODELVIEW_MATRIX))
-                        self.matrixDict['RightUpLeg']['data'].append(currentModelView)
+                        self.matrixDict['rButtock']['data'].append(currentModelView)
                     else:
-                        self.matrixDict['RightUpLeg']['flag'] = True
+                        self.matrixDict['rButtock']['flag'] = True
 
-                if node.nodeName == 'RightHand':
-                    if len(self.matrixDict['RightHand']['data']) < self.frames:
+                if node.nodeName == 'rHand':
+                    if len(self.matrixDict['rHand']['data']) < self.frames:
                         currentModelView = np.array(glGetFloatv(GL_MODELVIEW_MATRIX))
-                        self.matrixDict['RightHand']['data'].append(currentModelView)
+                        self.matrixDict['rHand']['data'].append(currentModelView)
                     else:
-                        self.matrixDict['RightHand']['flag'] = True
+                        self.matrixDict['rHand']['flag'] = True
                 
                 # Drawing Links
                 if node.fHaveSite:

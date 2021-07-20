@@ -47,15 +47,15 @@ class LocalGLWidget(QOpenGLWidget):
         self.lastPos = QPoint()
         self.matrixList = []
         self.matrixDict = {
-            '0': {
+            'hip': {
                 'data': [],
                 'flag': False
             },
-            'RightUpLeg': {
+            'rButtock': {
                 'data': [],
                 'flag': False
             },
-            'RightHand': {
+            'rHand': {
                 'data': [],
                 'flag': False
             }
@@ -70,7 +70,6 @@ class LocalGLWidget(QOpenGLWidget):
 
     def setMotion(self, root:BVHNode, motion, frames:int, frameTime:float):
         self.root = root
-        print(root.getNodeI(5).nodeName)
         self.motion = motion
         self.frames = frames
         self.frameTime = frameTime
@@ -104,14 +103,15 @@ class LocalGLWidget(QOpenGLWidget):
         glLoadIdentity()
         qs = self.sizeHint()
         gluPerspective(60.0, float(qs.width()) / float(qs.height()), 1.0, 1000.0)
-        if self.matrixDict['0']['flag'] and self.matrixDict['RightUpLeg']['flag']:
-            root_matrix = self.matrixDict['0']['data'][self.frameCount]
-            rightupleg_matrix = self.matrixDict['RightUpLeg']['data'][self.frameCount]
+        if self.matrixDict['hip']['flag'] and self.matrixDict['rButtock']['flag']:
+            root_matrix = self.matrixDict['hip']['data'][self.frameCount]
+            rightupleg_matrix = self.matrixDict['rButtock']['data'][self.frameCount]
             root_matrix44 = Matrix44(root_matrix)
             rightupleg_matrix44 = Matrix44(rightupleg_matrix)
             origin = Vector3([0., 0., 0.])
             root_coord = root_matrix44 * origin
             rightupleg_coord = rightupleg_matrix44 * origin
+            rightupleg_coord = Vector3([rightupleg_coord.x, root_coord.y, rightupleg_coord.z])
             norm_vec = vector.normalise(root_coord - rightupleg_coord)
             eye = root_coord - norm_vec * 200
             center = root_coord
@@ -163,14 +163,16 @@ class LocalGLWidget(QOpenGLWidget):
 
         if (self.root is not None) and (self.motion is not None):
             if len(self.screenCoords['x']) < self.frames:
-                m = self.matrixDict['RightHand']['data'][self.frameCount]
+                m = self.matrixDict['rHand']['data'][self.frameCount]
                 glPushMatrix()
                 matrix = m.T
                 currentModelView = np.array(glGetFloatv(GL_MODELVIEW_MATRIX))
                 modelview = glm.mat4(currentModelView.T)
                 original = glm.mat4(matrix) * glm.vec4(0, 0, 0, 1)
+                # print(original)
                 viewport = glm.vec4(0.0, 0.0, 500.0, 500.0)
                 projection = glm.mat4(self.currentProject.T)
+                # print(projection)
                 # print(modelview, original, viewport, projection)
                 coords = glm.project(glm.vec3(original), modelview, projection, viewport)
                 # print(coords.x, coords.y)
@@ -265,26 +267,26 @@ class LocalGLWidget(QOpenGLWidget):
                     elif "Zrotation" in channel:
                         glRotatef(self.motion[self.frameCount][node.frameIndex + i], 0.0, 0.0, 1.0)
 
-                if node.nodeIndex == 0:
-                    if len(self.matrixDict['0']['data']) < self.frames:
+                if node.nodeName == 'hip':
+                    if len(self.matrixDict['hip']['data']) < self.frames:
                         currentModelView = np.array(glGetFloatv(GL_MODELVIEW_MATRIX))
-                        self.matrixDict['0']['data'].append(currentModelView)
+                        self.matrixDict['hip']['data'].append(currentModelView)
                     else:
-                        self.matrixDict['0']['flag'] = True
+                        self.matrixDict['hip']['flag'] = True
 
-                if node.nodeName == 'RightUpLeg':
-                    if len(self.matrixDict['RightUpLeg']['data']) < self.frames:
+                if node.nodeName == 'rButtock':
+                    if len(self.matrixDict['rButtock']['data']) < self.frames:
                         currentModelView = np.array(glGetFloatv(GL_MODELVIEW_MATRIX))
-                        self.matrixDict['RightUpLeg']['data'].append(currentModelView)
+                        self.matrixDict['rButtock']['data'].append(currentModelView)
                     else:
-                        self.matrixDict['RightUpLeg']['flag'] = True
+                        self.matrixDict['rButtock']['flag'] = True
 
-                if node.nodeName == 'RightHand':
-                    if len(self.matrixDict['RightHand']['data']) < self.frames:
+                if node.nodeName == 'rHand':
+                    if len(self.matrixDict['rHand']['data']) < self.frames:
                         currentModelView = np.array(glGetFloatv(GL_MODELVIEW_MATRIX))
-                        self.matrixDict['RightHand']['data'].append(currentModelView)
+                        self.matrixDict['rHand']['data'].append(currentModelView)
                     else:
-                        self.matrixDict['RightHand']['flag'] = True
+                        self.matrixDict['rHand']['flag'] = True
                 
                 # Drawing Links
                 if node.fHaveSite:
