@@ -10,11 +10,15 @@ root_dir = "testbvh/"
 csv_stroke = []
 pick_globalTrace = []
 
-with open('csv/l_hand_rot_pick.pkl','rb') as file:
-    jointrot = pickle.load(file)
+with open('bvh/pickle/lhand_rot_pick.pkl','rb') as file:
+    lhand_rot = pickle.load(file)
+with open('bvh/pickle/rhand_rot_pick.pkl','rb') as file:
+    rhand_rot = pickle.load(file)
 # print(jointrot[18][0][1])
 
-rank = 39
+
+rhand_rank = 2
+lhand_rank = 18
 def readBVH(bvhAbsPath):
     u'''Read BVH file and parse to each parts
     return tuple of (RootNode, MotionSeries, Frames, FrameTime)
@@ -29,18 +33,7 @@ def readBVH(bvhAbsPath):
 
         motionInFrame = []
         motionSeries = []
-        globalTraceX = []
-        globalTraceZ = []
-        globalTraceY = []
-
-        globalTrace = []
-
-        globalstroke = []
-
-        normal = []
         rootMotion = []
-        normalMotion = []
-
         newMotionSeries = []
 
         for line in bvhFile:
@@ -115,29 +108,50 @@ def readBVH(bvhAbsPath):
             # print(len(motionSeries))
             mif = motionSeries[f]
             for i in range(len(mif)):
-                # 07.13
-                if i <22*3:
+                # 07.26
+                if i < 8*3:
+                    rootMotion.append(mif[i])
+                
+                if i == 8*3:
+                    rootMotion.append(rhand_rot[rhand_rank][f][0])
+                elif i == 8*3+1:
+                    rootMotion.append(rhand_rot[rhand_rank][f][1])
+                elif i == 8*3+2:
+                    rootMotion.append(rhand_rot[rhand_rank][f][2])
+                elif i == 8*3+3:
+                    rootMotion.append(rhand_rot[rhand_rank][f][3])
+                elif i == 8*3+4:
+                    rootMotion.append(rhand_rot[rhand_rank][f][4])
+                elif i == 8*3+5:
+                    rootMotion.append(rhand_rot[rhand_rank][f][5])
+                elif i == 8*3+6:
+                    rootMotion.append(rhand_rot[rhand_rank][f][6])
+                elif i == 8*3+7:
+                    rootMotion.append(rhand_rot[rhand_rank][f][7])
+                elif i == 8*3+8:
+                    rootMotion.append(rhand_rot[rhand_rank][f][8])
+
+                if i > 8*3+8 and i < 22*3:
                     rootMotion.append(mif[i])
 
-                
                 if i == 22*3:
-                    rootMotion.append(jointrot[rank][f][0])
+                    rootMotion.append(lhand_rot[lhand_rank][f][0])
                 elif i == 22*3+1:
-                    rootMotion.append(jointrot[rank][f][1])
+                    rootMotion.append(lhand_rot[lhand_rank][f][1])
                 elif i == 22*3+2:
-                    rootMotion.append(jointrot[rank][f][2])
+                    rootMotion.append(lhand_rot[lhand_rank][f][2])
                 elif i == 22*3+3:
-                    rootMotion.append(jointrot[rank][f][3])
+                    rootMotion.append(lhand_rot[lhand_rank][f][3])
                 elif i == 22*3+4:
-                    rootMotion.append(jointrot[rank][f][4])
+                    rootMotion.append(lhand_rot[lhand_rank][f][4])
                 elif i == 22*3+5:
-                    rootMotion.append(jointrot[rank][f][5])
+                    rootMotion.append(lhand_rot[lhand_rank][f][5])
                 elif i == 22*3+6:
-                    rootMotion.append(jointrot[rank][f][6])
+                    rootMotion.append(lhand_rot[lhand_rank][f][6])
                 elif i == 22*3+7:
-                    rootMotion.append(jointrot[rank][f][7])
+                    rootMotion.append(lhand_rot[lhand_rank][f][7])
                 elif i == 22*3+8:
-                    rootMotion.append(jointrot[rank][f][8])
+                    rootMotion.append(lhand_rot[lhand_rank][f][8])
                 
                 if i > 22*3+8:
                     rootMotion.append(mif[i])
@@ -148,7 +162,7 @@ def readBVH(bvhAbsPath):
         # print(len(motionSeries))
         # print(motionInFrame)          
         
-        dstFilePath = os.path.join("output/" + file.split(".")[0] + "_edited" + ".bvh")
+        dstFilePath = os.path.join("bvh/output/" + file.split(".")[0] + "_edited" + ".bvh")
         # print(dstFilePath)
         BVH.writeBVH(dstFilePath, tmpNode, newMotionSeries, frmNum, frmTime)
 
@@ -231,26 +245,10 @@ class BVHNode:
             nodelist.extend(child.getNodeList())
         return nodelist
 
+
 for file in os.listdir(root_dir):
     file_name = root_dir + file
     # print(file_name)
     filein = open(file_name,"r")
     readBVH(file_name)
 
-# peng
-tocsv = pd.DataFrame(csv_stroke)
-tocsv.to_csv("csv/global.csv")
-
-# pickfile = open('csv/test_pick.pkl','wb')
-# pickle.dump(csv_stroke, pickfile)
-# pickfile.close()
-'''
-# 06.16
-pickfile = open('csv/test_pick.pkl','wb')
-pickle.dump(pick_globalTrace, pickfile)
-pickfile.close()
-'''
-
-# with open('csv/test_pick.pkl','rb') as file:
-#     pkl_stroke = pickle.load(file)
-# print(pkl_stroke[0])

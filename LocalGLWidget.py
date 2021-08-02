@@ -36,6 +36,7 @@ class LocalGLWidget(QOpenGLWidget):
     frames = None
     frameTime = None
     drawMode = 0    # 0:rotation, 1:position
+    viewFlag = 'side'
     currentProject = None
     trajectoryFlag = False
     screenCoords = {'x': [], 'y': []}
@@ -110,10 +111,19 @@ class LocalGLWidget(QOpenGLWidget):
             rightupleg_matrix44 = Matrix44(rightupleg_matrix)
             origin = Vector3([0., 0., 0.])
             root_coord = root_matrix44 * origin
-            rightupleg_coord = rightupleg_matrix44 * origin
-            rightupleg_coord = Vector3([rightupleg_coord.x, root_coord.y, rightupleg_coord.z])
-            norm_vec = vector.normalise(root_coord - rightupleg_coord)
-            eye = root_coord - norm_vec * 200
+            if self.viewFlag == 'side':
+                camera_coord = rightupleg_matrix44 * origin
+                camera_coord = Vector3([camera_coord.x, root_coord.y, camera_coord.z])
+                norm_vec = vector.normalise(root_coord - camera_coord)
+            elif self.viewFlag == 'top':
+                camera_coord = Vector3([root_coord.x + 0.1, root_coord.y + 150, root_coord.z]) # Hack: avoid to look from the axis direction
+                norm_vec = vector.normalise(root_coord - camera_coord)
+            elif self.viewFlag == 'front':
+                camera_coord = rightupleg_matrix44 * origin
+                camera_coord = Vector3([-camera_coord.z, root_coord.y, camera_coord.x])
+                norm_vec = vector.normalise(-root_coord + camera_coord)
+                # norm_vec = Vector3([-norm_vec.z, root_coord.y, root_coord.x])
+            eye = root_coord - norm_vec * 150
             center = root_coord
             gluLookAt(eye.x, eye.y, eye.z, center.x, center.y, center.z, 0, 1, 0)
             self.currentProject = np.array(glGetFloatv(GL_PROJECTION_MATRIX))
@@ -131,9 +141,9 @@ class LocalGLWidget(QOpenGLWidget):
         self.drawSkeleton()
         if self.trajectoryFlag:
             self.drawTrajectory()
-        if len(self.screenCoords['x']) == self.frames:
-            print(self.frames)
-            print(self.screenCoords)
+        # if len(self.screenCoords['x']) == self.frames:
+        #     print(self.frames)
+        #     print(self.screenCoords)
         glPopMatrix()
         glFlush()
 #        self.update()
@@ -187,7 +197,7 @@ class LocalGLWidget(QOpenGLWidget):
             #             matrix[0, 2], matrix[1, 2], matrix[2, 2], matrix[3, 2], matrix[0, 3], matrix[1, 3], matrix[2, 3], matrix[3, 3]))
             # quadObj = None
             # _RenderJoint(quadObj)
-            
+            #     # glPopMatrix()
 
     def drawSkeleton(self):
         def _RenderBone(quadObj, x0, y0, z0, x1, y1, z1):

@@ -25,41 +25,61 @@ class ControlWidget(QGroupBox):
         self.pathResourceDir = os.path.join(parent.pathCurrentDir, "IconResource")
         self.setTitle("Control")
 
+
+
+
+
         playerLayout = QHBoxLayout()
-        self.rewindButton = _createButton("rewind", 60, self.rewindButtonAction, os.path.join(self.pathResourceDir, "rewind-solid.svg"))
+        self.rewindButton = _createButton("rewind", 60, 30, self.rewindButtonAction, os.path.join(self.pathResourceDir, "rewind-solid.svg"))
         playerLayout.addWidget(self.rewindButton)
         self.rewindButton.setEnabled(False)
         self.rewindButton.setFocusPolicy(Qt.NoFocus)
 
-
-        self.playButton = _createButton("play", 60, self.playButtonAction, os.path.join(self.pathResourceDir, "play-solid.svg"))
+        self.playButton = _createButton("play", 60, 30, self.playButtonAction, os.path.join(self.pathResourceDir, "play-solid.svg"))
         playerLayout.addWidget(self.playButton)
         self.playButton.setEnabled(False)
         self.playButton.setFocusPolicy(Qt.NoFocus)
         
-        self.pauseButton = _createButton("pause", 60, self.playButtonAction, os.path.join(self.pathResourceDir, "pause-solid.svg"))
+        self.pauseButton = _createButton("pause", 60, 30, self.playButtonAction, os.path.join(self.pathResourceDir, "pause-solid.svg"))
         playerLayout.addWidget(self.pauseButton)
         self.pauseButton.setVisible(False)
         self.pauseButton.setFocusPolicy(Qt.NoFocus)
 
-        self.stopButton = _createButton("stop", 60, self.stopButtonAction, os.path.join(self.pathResourceDir, "stop-solid.svg"))
+        self.stopButton = _createButton("stop", 60, 30, self.stopButtonAction, os.path.join(self.pathResourceDir, "stop-solid.svg"))
         playerLayout.addWidget(self.stopButton)
         self.stopButton.setEnabled(False)
         self.stopButton.setFocusPolicy(Qt.NoFocus)
 
-        self.forwardButton = _createButton("forward", 60, self.forwardButtonAction, os.path.join(self.pathResourceDir, "fast-forward-solid.svg"))
+        self.forwardButton = _createButton("forward", 60, 30, self.forwardButtonAction, os.path.join(self.pathResourceDir, "fast-forward-solid.svg"))
         playerLayout.addWidget(self.forwardButton)
         self.forwardButton.setEnabled(False)
         self.forwardButton.setFocusPolicy(Qt.NoFocus)
 
         camCtlLayout = QHBoxLayout()
-        self.camResetButton = _createButton("Camera Reset", 100, self.hParentWidget.drawPanel.resetCamera)
+        self.camResetButton = _createButton("Camera Reset", 140, 40, self.hParentWidget.drawPanel.resetCamera)
         camCtlLayout.addWidget(self.camResetButton)
         self.camResetButton.setFocusPolicy(Qt.NoFocus)
+
+        canvasCtlLayout = QHBoxLayout()
+        self.frontViewButton = _createButton("Front View", 100, 60, self.frontViewButtonAction)
+        canvasCtlLayout.addWidget(self.frontViewButton)
+        self.frontViewButton.setEnabled(True)
+        self.frontViewButton.setFocusPolicy(Qt.NoFocus)
+
+        self.sideViewButton = _createButton("Side View", 100, 60, self.sideViewButtonAction)
+        canvasCtlLayout.addWidget(self.sideViewButton)
+        self.sideViewButton.setEnabled(True)
+        self.sideViewButton.setFocusPolicy(Qt.NoFocus)
+
+        self.topViewButton = _createButton("Top View", 100, 60, self.topViewButtonAction)
+        canvasCtlLayout.addWidget(self.topViewButton)
+        self.topViewButton.setEnabled(False)
+        self.topViewButton.setFocusPolicy(Qt.NoFocus)
 
         mainLayout = QVBoxLayout()
         mainLayout.addLayout(playerLayout)
         mainLayout.addLayout(camCtlLayout)
+        # mainLayout.addLayout(canvasCtlLayout)
         self.setLayout(mainLayout)
 
     def setPlayMode(self, fPlay):
@@ -78,6 +98,28 @@ class ControlWidget(QGroupBox):
         self.playButton.setEnabled(True)
         self.pauseButton.setEnabled(True)
         self.stopButton.setEnabled(True)
+
+    def frontViewButtonAction(self):
+        self.frontViewButton.setEnabled(False)
+        self.sideViewButton.setEnabled(True)
+        self.topViewButton.setEnabled(True)
+        self.hParentWidget.paintGlobalPanel.frontView()
+        self.hParentWidget.infoPanel.loadFlag()
+
+    def sideViewButtonAction(self):
+        self.frontViewButton.setEnabled(True)
+        self.sideViewButton.setEnabled(False)
+        self.topViewButton.setEnabled(True)
+        self.hParentWidget.paintGlobalPanel.sideView()
+        self.hParentWidget.infoPanel.loadFlag()
+
+    def topViewButtonAction(self):
+        self.frontViewButton.setEnabled(True)
+        self.sideViewButton.setEnabled(True)
+        self.topViewButton.setEnabled(False)
+        self.hParentWidget.paintGlobalPanel.topView()
+        self.hParentWidget.infoPanel.loadFlag()
+
 
     def playButtonAction(self):
         self.fPlayMode = not self.fPlayMode
@@ -123,7 +165,7 @@ class ControlWidget(QGroupBox):
             self.hParentWidget.drawPanel.frameCount += 1
 
 ## Support Functions
-def _createButton(title, width, func, iconPath = None):
+def _createButton(title, width, height, func, iconPath = None):
     if iconPath is None:
         button = QPushButton(title)
     else:
@@ -131,5 +173,6 @@ def _createButton(title, width, func, iconPath = None):
         button.setIcon(QIcon(QPixmap(iconPath)))
 
     button.setFixedWidth(width)
+    button.setFixedHeight(height)
     button.clicked.connect(func)
     return button

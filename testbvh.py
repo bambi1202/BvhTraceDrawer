@@ -6,9 +6,11 @@ import pickle
 
 from python_bvh import BVH
 
-root_dir = "normalized/"
+root_dir = "bvh/motion/"
 csv_stroke = []
 pick_globalTrace = []
+lhand_sets = []
+rhand_sets = []
 
 def readBVH(bvhAbsPath):
     u'''Read BVH file and parse to each parts
@@ -36,6 +38,14 @@ def readBVH(bvhAbsPath):
         normalMotion = []
 
         newMotionSeries = []
+
+        lhand_rot = []
+        rhand_rot = []
+        lhand_inframe = []
+        rhand_inframe = []
+        lhand_rot_series = []
+        rhand_rot_series = []
+        
 
         for line in bvhFile:
             # cutting line terminator
@@ -111,43 +121,31 @@ def readBVH(bvhAbsPath):
             for i in range(len(mif)):
                 # 07.13
                 # 1st frame
-                if i < 3:
-                    if i != 1:
-                        rootMotion.append(0.0)
-                    if i == 1:
-                        rootMotion.append(75.0)
+                # if i < 3:
+                #     if i != 1:
+                #         rootMotion.append(0.0)
+                #     if i == 1:
+                #         rootMotion.append(75.0)
                 
-                elif i > 8*3-1 and i < 10*3+3:
+                # left hand
+                if i > 8*3-1 and i < 10*3+3:
                     rootMotion.append(0.0)
+                    lhand_rot.append(mif[i])
+                
+                # right hand
                 elif i > 22*3-1 and i < 24*3+3:
                     rootMotion.append(0.0)
+                    rhand_rot.append(mif[i])
                 
                 else:
                     rootMotion.append(mif[i])
-
-                '''
-                if i < 3 and f == 0:
-                    # normal.append(mif[i])
-                    if i != 1:
-                        normal.append(mif[i]) # normal x z position
-                        rootMotion.append(0.0) # init x z position
-                    else:
-                        normal.append(0.0) # normal y position
-                        rootMotion.append(mif[i]) # init y position
-                # 2nd frame ~       
-                if i < 3 and f > 0:
-                    rootMotion.append(mif[i] - normal[i])
-                if i > 2 and f > 0:
-                    rootMotion.append(mif[i])
-                '''
-            # print(normal)        
-            # print(rootMotion)
+            
+            lhand_rot = []
             newMotionSeries.append(rootMotion)
-            # print(len(rootMotion))
-            rootMotion = []
-        # print(len(motionSeries))
-        # print(motionInFrame)          
-        
+            lhand_rot_series.append(lhand_inframe)
+            rootMotion = []        
+        lhand_sets.append(lhand_rot_series)
+        print(len(lhand_inframe))
         dstFilePath = os.path.join("testbvh/" + file.split(".")[0] + "_test" + ".bvh")
         # print(dstFilePath)
         BVH.writeBVH(dstFilePath, tmpNode, newMotionSeries, frmNum, frmTime)

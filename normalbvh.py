@@ -6,7 +6,7 @@ import pickle
 
 from python_bvh import BVH
 
-root_dir = "bvhdata/"
+root_dir = "0802/"
 csv_stroke = []
 pick_globalTrace = []
 l_hand_ttl = []
@@ -125,14 +125,16 @@ def readBVH(bvhAbsPath):
             for i in range(len(mif)):
                 # 07.13
                 # 1st frame
-                if i < 3 and f == 0:
+                if f == 0:
                     # normal.append(mif[i])
-                    if i != 1:
+                    if i < 3 and i != 1:
                         normal.append(mif[i]) # normal x z position
                         rootMotion.append(0.0) # init x z position
-                    else:
+                    if i == 1 :
                         normal.append(0.0) # normal y position
                         rootMotion.append(mif[i]) # init y position
+                    if i > 2:
+                        rootMotion.append(mif[i])
                 # 2nd frame ~       
                 if i < 3 and f > 0:
                     rootMotion.append(mif[i] - normal[i])
@@ -182,11 +184,11 @@ def readBVH(bvhAbsPath):
         # print(len(motionSeries))
         # print(motionInFrame)          
         
-        dstFilePath = os.path.join("normalized/" + file.split(".")[0] + "_n" + ".bvh")
+        dstFilePath = os.path.join("0802_n/" + file.split(".")[0] + "_n" + ".bvh")
         # print(dstFilePath)
 
         # 07.13
-        BVH.writeBVH(dstFilePath, tmpNode, newMotionSeries[1:101], 100, frmTime)
+        BVH.writeBVH(dstFilePath, tmpNode, newMotionSeries, 100, frmTime)
         # BVH.writeBVH(dstFilePath, tmpNode, newMotionSeries[1:], frmNum-1, frmTime)
 
         '''
@@ -275,8 +277,8 @@ for file in os.listdir(root_dir):
     readBVH(file_name)
 
 # peng
-tocsv = pd.DataFrame(csv_stroke)
-tocsv.to_csv("csv/global.csv")
+# tocsv = pd.DataFrame(csv_stroke)
+# tocsv.to_csv("csv/global.csv")
 
 # pickfile = open('csv/test_pick.pkl','wb')
 # pickle.dump(csv_stroke, pickfile)

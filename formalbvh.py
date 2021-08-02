@@ -4,7 +4,7 @@ import os
 import pandas as pd
 import pickle
 
-root_dir = "bvhdata/"
+root_dir = "data_0725/"
 csv_stroke = []
 pick_globalTrace = []
 

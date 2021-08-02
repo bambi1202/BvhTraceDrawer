@@ -102,6 +102,7 @@ class GLWidget(QOpenGLWidget):
         camPx = self.camDist * np.cos(self.rotateXZ / 180.0)
         camPy = self.camDist * np.tanh(self.rotateY / 180.0)
         camPz = self.camDist * np.sin(self.rotateXZ / 180.0)
+        # print(camPx, camPy, camPz)
         transX = self.translateX * -np.sin(self.rotateXZ / 180.0)
         transZ = self.translateX * np.cos(self.rotateXZ / 180.0)
         # self.currentProject = np.array(glGetFloatv(GL_PROJECTION_MATRIX))
@@ -142,13 +143,13 @@ class GLWidget(QOpenGLWidget):
                 glColor3f(0.000, 1.000, 0.000)
 
         if (self.root is not None) and (self.motion is not None):
-            for m in self.matrixDict['rHand']['data']:
+            for m in self.matrixDict['hip']['data']:
                 glPushMatrix()
                 matrix = m.T
                 glMultMatrixd((matrix[0, 0], matrix[1, 0], matrix[2, 0], matrix[3, 0], matrix[0, 1], matrix[1, 1], matrix[2, 1], matrix[3, 1],
                             matrix[0, 2], matrix[1, 2], matrix[2, 2], matrix[3, 2], matrix[0, 3], matrix[1, 3], matrix[2, 3], matrix[3, 3]))
                 quadObj = None
-                _RenderJoint(quadObj)
+                # _RenderJoint(quadObj)
                 glPopMatrix()
 
     def drawSkeleton(self):
