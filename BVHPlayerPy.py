@@ -47,7 +47,7 @@ class BVHPlayerPy(QMainWindow):
         
         self.pathCurrentDir = pathCD
         self.pathMotionFileDir = pathCD.rstrip(os.path.basename(pathCD))
-        self.nodeFlag = 'rHand'
+        self.nodeFlag = 'hip'
 
         self.setCentralWidget(self.initComponent())
         menuBar = self.menuBar()
@@ -91,7 +91,7 @@ class BVHPlayerPy(QMainWindow):
     def initComponent(self):
         self.drawPanel = GLWidget(self)
         self.paintPanel = PaintWidget(self)
-        self.paintGlobalPanel = PaintWidgetGlobal(self)
+        # self.paintGlobalPanel = PaintWidgetGlobal(self)
         self.localdrawPanel = LocalGLWidget(self)
         self.infoPanel = InfoWidget(self)
         self.controlPanel = ControlWidget(self)
@@ -107,23 +107,25 @@ class BVHPlayerPy(QMainWindow):
         # peng 07.21
         editLayout = QVBoxLayout()
         self.globalNameLabel = QLabel()
-        self.globalNameLabel.setText(" Global Editing Stage  -----------------------------------")
+        self.globalNameLabel.setText("Editing Stage  -----------------------------------")
         editLayout.addWidget(self.globalNameLabel)
-        editLayout.addWidget(self.paintGlobalPanel)
-        self.localNameLabel = QLabel()
-        self.localNameLabel.setText(" Local Editing Stage  ----------------------------------")
-        editLayout.addWidget(self.localNameLabel)
+        # editLayout.addWidget(self.paintGlobalPanel)
+        # self.localNameLabel = QLabel()
+        # self.localNameLabel.setText(" Local Editing Stage  ----------------------------------")
+        # editLayout.addWidget(self.localNameLabel)
         editLayout.addWidget(self.paintPanel)
 
-        viewLayout = QVBoxLayout()
+        viewLayout_global = QVBoxLayout()
         self.worldNameLabel = QLabel()
         self.worldNameLabel.setText(" World View  ----------------------------------")
-        viewLayout.addWidget(self.worldNameLabel)
-        viewLayout.addWidget(self.drawPanel)
+        viewLayout_global.addWidget(self.worldNameLabel)
+        viewLayout_global.addWidget(self.drawPanel)
+
+        viewLayout_local = QVBoxLayout()
         self.relativeNameLabel = QLabel()
         self.relativeNameLabel.setText(" Relative View  ----------------------------------")
-        viewLayout.addWidget(self.relativeNameLabel)
-        viewLayout.addWidget(self.localdrawPanel)
+        viewLayout_local.addWidget(self.relativeNameLabel)
+        viewLayout_local.addWidget(self.localdrawPanel)
 
         controlLayout = QVBoxLayout()
         controlLayout.addWidget(self.infoPanel)
@@ -134,7 +136,8 @@ class BVHPlayerPy(QMainWindow):
 
         mainLayout = QHBoxLayout()
         mainLayout.addLayout(editLayout)
-        mainLayout.addLayout(viewLayout)
+        mainLayout.addLayout(viewLayout_global)
+        mainLayout.addLayout(viewLayout_local)
         mainLayout.addLayout(controlLayout)
         
         # mainLayout = QHBoxLayout()
@@ -180,8 +183,9 @@ class BVHPlayerPy(QMainWindow):
         # self.splitterPanel.initMotionData(os.path.basename(filePath), root, motion, frameTime)
 
     def setNodeFlag(self, flag):
-        assert flag in ['head', 'lHand', 'rHand', 'lFoot', 'rFoot']
+        assert flag in ['head', 'lHand', 'rHand', 'lFoot', 'rFoot', 'hip']
         self.nodeFlag = flag
+        self.paintPanel.nodeFlag = flag
 
         
 

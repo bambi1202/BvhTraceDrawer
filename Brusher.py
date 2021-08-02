@@ -83,21 +83,21 @@ class brusherWidget(QGroupBox):
         self.frontViewButton.setEnabled(False)
         self.sideViewButton.setEnabled(True)
         self.topViewButton.setEnabled(True)
-        self.hParentWidget.paintGlobalPanel.frontView()
+        self.hParentWidget.paintPanel.frontView()
         self.hParentWidget.infoPanel.loadFlag()
 
     def sideViewButtonAction(self):
         self.frontViewButton.setEnabled(True)
         self.sideViewButton.setEnabled(False)
         self.topViewButton.setEnabled(True)
-        self.hParentWidget.paintGlobalPanel.sideView()
+        self.hParentWidget.paintPanel.sideView()
         self.hParentWidget.infoPanel.loadFlag()
 
     def topViewButtonAction(self):
         self.frontViewButton.setEnabled(True)
         self.sideViewButton.setEnabled(True)
         self.topViewButton.setEnabled(False)
-        self.hParentWidget.paintGlobalPanel.topView()
+        self.hParentWidget.paintPanel.topView()
         self.hParentWidget.infoPanel.loadFlag()     
 
     def undoAction(self):

@@ -60,7 +60,7 @@ class InfoWidget(QGroupBox):
         self.setLayout(mainLayout)
 
     def loadFlag(self):
-        self.Flag = self.hParentWidget.paintGlobalPanel.viewFlag
+        self.Flag = self.hParentWidget.paintPanel.viewFlag
         self.worldCamMod.setText(self.Flag)
         self.relativeCamMod.setText(self.Flag)
 

@@ -27,6 +27,9 @@ class EditWidget(QGroupBox):
         self.setTitle("Local Motion Editor")
 
         headLayout = QHBoxLayout()
+        self.globalButton = _createButton("Global", 150, 100, self.globalButtonAction)
+        headLayout.addWidget(self.globalButton)
+        self.globalButton.setEnabled(False)
         self.headButton = _createButton("Head Node", 150, 100, self.headButtonAction)
         headLayout.addWidget(self.headButton)
         self.headButton.setEnabled(True)
@@ -38,7 +41,7 @@ class EditWidget(QGroupBox):
         self.lhandButton.setEnabled(True)
         self.rhandButton = _createButton("Right Hand Node", 150, 100, self.rhandButtonAction)
         handLayout.addWidget(self.rhandButton)
-        self.rhandButton.setEnabled(False)
+        self.rhandButton.setEnabled(True)
         
         
 
@@ -94,7 +97,17 @@ class EditWidget(QGroupBox):
         self.topViewButton.setEnabled(False)
         self.hParentWidget.paintGloblaPanel.topView()
 
+    def globalButtonAction(self):
+        self.globalButton.setEnabled(False)
+        self.headButton.setEnabled(True)
+        self.lhandButton.setEnabled(True)
+        self.rhandButton.setEnabled(True)
+        self.lfootButton.setEnabled(True)
+        self.rfootButton.setEnabled(True)
+        self.hParentWidget.setNodeFlag('hip')
+
     def headButtonAction(self):
+        self.globalButton.setEnabled(True)
         self.headButton.setEnabled(False)
         self.lhandButton.setEnabled(True)
         self.rhandButton.setEnabled(True)
@@ -103,6 +116,7 @@ class EditWidget(QGroupBox):
         self.hParentWidget.setNodeFlag('head')
     
     def rhandButtonAction(self):
+        self.globalButton.setEnabled(True)
         self.headButton.setEnabled(True)
         self.lhandButton.setEnabled(True)
         self.rhandButton.setEnabled(False)
@@ -111,6 +125,7 @@ class EditWidget(QGroupBox):
         self.hParentWidget.setNodeFlag('rHand')
 
     def lhandButtonAction(self):
+        self.globalButton.setEnabled(True)
         self.headButton.setEnabled(True)
         self.lhandButton.setEnabled(False)
         self.rhandButton.setEnabled(True)
@@ -119,6 +134,7 @@ class EditWidget(QGroupBox):
         self.hParentWidget.setNodeFlag('lHand')
 
     def rfootButtonAction(self):
+        self.globalButton.setEnabled(True)
         self.headButton.setEnabled(True)
         self.lhandButton.setEnabled(True)
         self.rhandButton.setEnabled(True)
@@ -127,6 +143,7 @@ class EditWidget(QGroupBox):
         self.hParentWidget.setNodeFlag('rFoot')
 
     def lfootButtonAction(self):
+        self.globalButton.setEnabled(True)
         self.headButton.setEnabled(True)
         self.lhandButton.setEnabled(True)
         self.rhandButton.setEnabled(True)

@@ -1,5 +1,6 @@
 import numpy as np
 import time
+import os
 
 from PyQt5.Qt import *
 from PyQt5.QtCore import *
@@ -24,7 +25,8 @@ COLORS = {
     'lHand': [0, 128, 0],
     'rFoot': [128, 128, 0],
     'lFoot': [0, 0, 128],
-    'head': [128, 0, 128]
+    'head': [128, 0, 128],
+    'hip':[0, 0, 255]
 }
 
 class PaintWidget(QWidget):
@@ -33,12 +35,36 @@ class PaintWidget(QWidget):
         self.hParentWidget = parent
         self.setMinimumSize(500, 500)
         self.csv_pds = self.hParentWidget.csv_pds
-        self.keynodes = ['rHand', 'lHand', 'rFoot', 'lFoot', 'head']
+        self.keynodes = ['rHand', 'lHand', 'rFoot', 'lFoot', 'head', 'hip']
         self.node_sets = []
         self.ranked = []
         self.viewFlag = 'side'
+        self.globalViewFlag = 'top'
+        self.node_display_list = []
         self.lhand_rank = 0
         self.rhand_rank = 0
+        self.nodeFlag = self.hParentWidget.nodeFlag
+        self.history_input = {
+            'hip': None,
+            'rHand': None,
+            'lHand': None,
+            'rFoot': None,
+            'lFoot': None,
+            'head': None,
+        }
+        self.history_retrieval = {
+            'hip': [],
+            'rHand': [],
+            'lHand': [],
+            'rFoot': [],
+            'lFoot': [],
+            'head': [],
+        }
+
+        self.camposTop = glm.vec3(0, 150, 0)
+        self.camposSide = glm.vec3(0, 75, 100)
+        self.camposFront = glm.vec3(100 ,75, 0)
+        self.motionFile = None
         
 
         self.retrieving = False
@@ -131,12 +157,27 @@ class PaintWidget(QWidget):
 
                 viewport = glm.vec4(0.0, 0.0, 500.0, 500.0)
                 modelview = glm.mat4(1.0)
+
+                if self.globalViewFlag == 'top':
+                    global_camera_pos = self.camposTop
+                    global_camera_ground = glm.vec3(0, 0, -1)
+                if self.globalViewFlag == 'front':
+                    global_camera_pos = self.camposFront
+                    global_camera_ground = glm.vec3(0, 75, 0)
+                if self.globalViewFlag == 'side':
+                    global_camera_pos = self.camposSide
+                    global_camera_ground = glm.vec3(0, 75, 0)
+                camera_up = glm.vec3(0, 1, 0)
+                global_projection_mat = glm.perspective(60.0 * math.pi / 180.0, 1.0, 1.0, 1000.0) * glm.lookAt(global_camera_pos, global_camera_ground, camera_up)
                 # hip_coords = glm.project(glm.vec3(hip), modelview, projection_mat, viewport)
                 # self.psets['hip']['points'].append(QPointF(hip_coords.x, 500 - hip_coords.y))
 
                 for keynode in self.keynodes:
                     node = glm.vec3(row[1][f'{keynode}.X'], row[1][f'{keynode}.Y'], row[1][f'{keynode}.Z'])
-                    node_coords = glm.project(glm.vec3(node), modelview, projection_mat, viewport)
+                    if keynode != 'hip':
+                        node_coords = glm.project(glm.vec3(node), modelview, projection_mat, viewport)
+                    else:
+                        node_coords = glm.project(glm.vec3(node), modelview, global_projection_mat, viewport)
                     csv_node_traje[keynode].append([node_coords.x, 500 - node_coords.y])
             self.node_sets.append(csv_node_traje)
 
@@ -155,6 +196,8 @@ class PaintWidget(QWidget):
     def mouseReleaseEvent(self, event):
         self.pressed = False
         self.retrieving = True
+        self.node_display_list.append(self.nodeFlag)
+        self.node_display_list = list(set(self.node_display_list))
         # self.psets.append(self.points)
         # self.points = []
         self.update()
@@ -168,7 +211,19 @@ class PaintWidget(QWidget):
         if len(self.points) > 0:
             painter.setPen(QColor(0,   0,   0,  255))
             painter.drawPolyline(*self.points)
+            for k, v in self.history_input.items():
+                if v:
+                    painter.drawPolyline(*v)
+            for k, v in self.history_retrieval.items():
+                if len(v) > 0:
+                    for stroke in v:
+                        painter.setOpacity(0.5)
+                        painter.setPen(QColor(*COLORS[k], 255))
+                        painter.drawPolyline(*stroke)
+                        painter.setOpacity(1)
             if self.retrieving:
+                self.history_retrieval[self.nodeFlag] = []
+
                 query_stroke_coords = [[p.x(), p.y()] for p in self.points]
                 query_stroke = np.array(query_stroke_coords)
 
@@ -177,14 +232,16 @@ class PaintWidget(QWidget):
                 for node_traje in self.node_sets:
                     if self.hParentWidget.nodeFlag == 'lHand':
                         to_compare_coords = node_traje['lHand']
-                    if self.hParentWidget.nodeFlag == 'rHand':
+                    elif self.hParentWidget.nodeFlag == 'rHand':
                         to_compare_coords = node_traje['rHand']  
-                    if self.hParentWidget.nodeFlag == 'lFoot':
+                    elif self.hParentWidget.nodeFlag == 'lFoot':
                         to_compare_coords = node_traje['lFoot']    
-                    if self.hParentWidget.nodeFlag == 'rFoot':
+                    elif self.hParentWidget.nodeFlag == 'rFoot':
                         to_compare_coords = node_traje['rFoot']  
-                    if self.hParentWidget.nodeFlag == 'head':
+                    elif self.hParentWidget.nodeFlag == 'head':
                         to_compare_coords = node_traje['head']
+                    elif self.hParentWidget.nodeFlag == 'hip':
+                        to_compare_coords = node_traje['hip']
                     to_compare = np.array(to_compare_coords)
                     difference = similaritymeasures.frechet_dist(query_stroke, to_compare)
                     # print(difference)
@@ -219,31 +276,63 @@ class PaintWidget(QWidget):
                         camera_up = glm.vec3(0, 1, 0)
                         projection_mat = glm.perspective(60.0 * math.pi / 180.0, 1.0, 1.0, 1000.0) * glm.lookAt(camera_pos, hip, camera_up)
 
+                        
+                        if self.globalViewFlag == 'top':
+                            global_camera_pos = self.camposTop
+                            global_camera_ground = glm.vec3(0, 0, -1)
+                        if self.globalViewFlag == 'front':
+                            global_camera_pos = self.camposFront
+                            global_camera_ground = glm.vec3(0, 75, 0)
+                        if self.globalViewFlag == 'side':
+                            global_camera_pos = self.camposSide
+                            global_camera_ground = glm.vec3(0, 75, 0)
+                        camera_up = glm.vec3(0, 1, 0)
+                        global_projection_mat = glm.perspective(60.0 * math.pi / 180.0, 1.0, 1.0, 1000.0) * glm.lookAt(global_camera_pos, global_camera_ground, camera_up)
+
                         viewport = glm.vec4(0.0, 0.0, 500.0, 500.0)
                         modelview = glm.mat4(1.0)
 
                         for keynode in self.keynodes:
                             node = glm.vec3(row[1][f'{keynode}.X'], row[1][f'{keynode}.Y'], row[1][f'{keynode}.Z'])
-                            node_coords = glm.project(glm.vec3(node), modelview, projection_mat, viewport)
+                            if keynode != 'hip':
+                                node_coords = glm.project(glm.vec3(node), modelview, projection_mat, viewport)
+                            else:
+                                node_coords = glm.project(glm.vec3(node), modelview, global_projection_mat, viewport)
                             single_traje[keynode].append(QPointF(node_coords.x, 500 - node_coords.y))
 
                     for k, v in single_traje.items():
-                        if k == self.hParentWidget.nodeFlag:
+                        # if k in self.node_display_list:
+                        if k == self.nodeFlag:
                             painter.setOpacity(0.5)
                             painter.setPen(QColor(*COLORS[k], 255))
                             painter.drawPolyline(*v)
                             painter.setOpacity(1)
+                            self.history_retrieval[self.nodeFlag].append(v[:])
                 
                 self.retrieving = False
-        if self.hParentWidget.paintGlobalPanel.motionFile is not None: 
-            motionFile = self.hParentWidget.paintGlobalPanel.motionFile 
-            skeletonRank = self.hParentWidget.paintGlobalPanel.ranked[0]        
-            self.editor.editBVH(motionFile, self.lhand_rank, self.rhand_rank)
-            print(self.lhand_rank, self.rhand_rank)
-            editedFile = 'bvh/output/' + str(skeletonRank) + '_n_test_edited.bvh'
-            self.hParentWidget.playFile(editedFile)
+                self.history_input[self.nodeFlag] = self.points[:]
+                
+                print(self.node_display_list)
+                print(self.nodeFlag)
+                if self.nodeFlag == 'hip' and len(self.ranked) > 0:
+                    self.motionFile = self.hParentWidget.bvh_dir + str(self.ranked[0]) + '_n_test.bvh'
+                    self.motionRank = self.ranked[0]
+                    self.hParentWidget.playFile(self.motionFile)
+                if self.nodeFlag != 'hip' and self.motionFile is not None: 
+                    # skeletonRank = self.hParentWidget.paintGlobalPanel.ranked[0]        
+                    self.editor.editBVH(self.motionFile, self.lhand_rank, self.rhand_rank)
+                    print(self.lhand_rank, self.rhand_rank)
+                    editedFile = 'bvh/output/' + str(self.motionRank) + '_n_test_edited.bvh'
+                    self.hParentWidget.playFile(editedFile)
 
-
+        def frontView(self):
+            self.globalViewFlag = 'front'
+    
+        def sideView(self):
+            self.globalViewFlag = 'side'
+        
+        def topView(self):
+            self.globalViewFlag = 'top'
         # query_stroke = np.zeros((len(self.px), 2))
         # query_stroke[:, 0] = self.
         
